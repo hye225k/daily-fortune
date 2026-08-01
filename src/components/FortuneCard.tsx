@@ -4,6 +4,16 @@ import { useEffect, useState } from "react";
 import { drawFortune, type FortuneResult } from "@/lib/fortunes";
 import { saveFortune, getFortuneCount } from "@/lib/draws";
 
+// 로또 번호 6개에 각각 다른 색을 입힙니다.
+const LOTTO_COLORS = [
+  "bg-rose-500",
+  "bg-amber-500",
+  "bg-emerald-500",
+  "bg-sky-500",
+  "bg-violet-500",
+  "bg-fuchsia-500",
+];
+
 export default function FortuneCard() {
   const [flipped, setFlipped] = useState(false);
   const [result, setResult] = useState<FortuneResult | null>(null);
@@ -59,7 +69,7 @@ export default function FortuneCard() {
       if (!res.ok || !data.fortune) {
         throw new Error(data.error || "AI 운세 생성에 실패했어요.");
       }
-      // AI가 만든 운세 문장에, 기존 방식의 행운 아이템/색/로또를 합칩니다.
+      // AI가 만든 운세 문장에, 기존 방식의 행운 아이템/색/음식/로또를 합칩니다.
       const aiResult: FortuneResult = { ...drawFortune(), fortune: data.fortune };
 
       if (flipped) {
@@ -88,7 +98,7 @@ export default function FortuneCard() {
 
       <div className="[perspective:1200px]">
         <div
-          className={`relative h-80 w-56 transition-transform duration-700 ease-out [transform-style:preserve-3d] sm:h-96 sm:w-64 ${
+          className={`relative h-[26rem] w-64 transition-transform duration-700 ease-out [transform-style:preserve-3d] sm:h-[30rem] sm:w-72 ${
             flipped ? "[transform:rotateY(180deg)]" : ""
           }`}
         >
@@ -116,57 +126,17 @@ export default function FortuneCard() {
               <p>
                 🎨 행운의 색 <span className="font-semibold">{result?.color}</span>
               </p>
+              <p>
+                🍽️ 행운의 음식 <span className="font-semibold">{result?.food}</span>
+              </p>
             </div>
             <div className="mt-1 flex flex-col items-center gap-2">
               <p className="text-sm text-violet-800 dark:text-violet-300">
                 🎱 행운의 로또 번호
               </p>
-              <div className="flex flex-wrap justify-center gap-1.5">
-                {result?.lotto.map((n) => (
+              <div className="grid grid-cols-3 gap-2">
+                {result?.lotto.map((n, i) => (
                   <span
                     key={n}
-                    className="flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-sm font-bold text-white shadow dark:bg-violet-500"
-                  >
-                    {n}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center gap-3 sm:flex-row">
-        <button
-          onClick={handleDraw}
-          disabled={isDrawing || aiLoading}
-          className="rounded-full bg-violet-600 px-8 py-3 text-base font-semibold text-white shadow-md transition hover:bg-violet-700 active:scale-95 disabled:opacity-60"
-        >
-          {flipped ? "다시 뽑기" : "운세 보기"}
-        </button>
-
-        <button
-          onClick={handleAIDraw}
-          disabled={isDrawing || aiLoading}
-          className="rounded-full border border-violet-300 bg-white px-8 py-3 text-base font-semibold text-violet-700 shadow-md transition hover:bg-violet-50 active:scale-95 disabled:opacity-60 dark:border-violet-700 dark:bg-neutral-900 dark:text-violet-300 dark:hover:bg-neutral-800"
-        >
-          {aiLoading ? "AI가 만드는 중…" : "🤖 AI 운세 만들기"}
-        </button>
-      </div>
-
-      {error && (
-        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
-      )}
-
-      {count !== null && (
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          지금까지 뽑은 운세{" "}
-          <span className="font-semibold text-violet-600 dark:text-violet-400">
-            {count.toLocaleString()}
-          </span>
-          번
-        </p>
-      )}
-    </div>
-  );
-}
+                    className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white shadow ${
+                      LOTTO_COLORS[i % LOTTO_COLORS.length]
