@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
-      { error: "OPENROUTER_API_KEY 가 설정되지 않았어요." },
+      { error: "키가 서버에 없어요 (OPENROUTER_API_KEY 미설정)." },
       { status: 500 }
     );
   }
@@ -33,9 +33,10 @@ export async function POST(request: Request) {
           {
             role: "system",
             content:
-              "너는 따뜻하고 긍정적인 '오늘의 운세'를 지어주는 도우미야. " +
-              "한국어로, 한두 문장의 짧고 다정한 운세를 만들어. " +
-              "이모지나 따옴표 없이 운세 문장만 출력해.",
+              "너는 '오늘의 운세'를 위트 있게 지어주는 도우미야. " +
+              "뻔한 덕담이나 교훈적인 말은 절대 금지. " +
+              "한국어로 한두 문장, 가벼운 유머나 재치 있는 반전이 담긴 운세를 만들어. " +
+              "부정적이거나 불쾌한 내용은 피하고, 이모지나 따옴표 없이 운세 문장만 출력해.",
           },
           {
             role: "user",
@@ -46,29 +47,27 @@ export async function POST(request: Request) {
       }),
     });
 
+    const raw = await res.text();
     if (!res.ok) {
-      const detail = await res.text();
-      console.error("OpenRouter 오류:", res.status, detail);
       return NextResponse.json(
-        { error: "AI 운세 생성에 실패했어요. 잠시 후 다시 시도해주세요." },
+        { error: `OpenRouter ${res.status}: ${raw.slice(0, 300)}` },
         { status: 502 }
       );
     }
 
-    const data = await res.json();
+    const data = JSON.parse(raw);
     const fortune: string | undefined = data?.choices?.[0]?.message?.content?.trim();
     if (!fortune) {
       return NextResponse.json(
-        { error: "AI 응답을 읽지 못했어요." },
+        { error: `응답에 운세가 없어요: ${raw.slice(0, 300)}` },
         { status: 502 }
       );
     }
 
     return NextResponse.json({ fortune });
   } catch (err) {
-    console.error(err);
     return NextResponse.json(
-      { error: "서버 오류가 발생했어요." },
+      { error: `서버 예외: ${err instanceof Error ? err.message : String(err)}` },
       { status: 500 }
     );
   }
