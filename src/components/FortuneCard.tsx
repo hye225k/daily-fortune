@@ -10,6 +10,8 @@ export default function FortuneCard() {
   const [isDrawing, setIsDrawing] = useState(false);
   const [name, setName] = useState("");
   const [count, setCount] = useState<number | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // 첫 렌더 시 지금까지 저장된 운세 개수를 Supabase에서 가져옵니다.
   useEffect(() => {
@@ -40,6 +42,37 @@ export default function FortuneCard() {
 
     recordDraw(drawFortune());
     setFlipped(true);
+  }
+
+  // 버튼을 누르면 서버(/api/fortune)를 통해 AI가 운세를 새로 만들어 줍니다.
+  async function handleAIDraw() {
+    if (isDrawing || aiLoading) return;
+    setError(null);
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/fortune", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.fortune) {
+        throw new Error(data.error || "AI 운세 생성에 실패했어요.");
+      }
+      // AI가 만든 운세 문장에, 기존 방식의 행운 아이템/색/로또를 합칩니다.
+      const aiResult: FortuneResult = { ...drawFortune(), fortune: data.fortune };
+
+      if (flipped) {
+        setFlipped(false);
+        await new Promise((r) => setTimeout(r, 400));
+      }
+      recordDraw(aiResult);
+      setFlipped(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "문제가 발생했어요.");
+    } finally {
+      setAiLoading(false);
+    }
   }
 
   return (
@@ -103,13 +136,27 @@ export default function FortuneCard() {
         </div>
       </div>
 
-      <button
-        onClick={handleDraw}
-        disabled={isDrawing}
-        className="rounded-full bg-violet-600 px-8 py-3 text-base font-semibold text-white shadow-md transition hover:bg-violet-700 active:scale-95 disabled:opacity-60"
-      >
-        {flipped ? "다시 뽑기" : "운세 보기"}
-      </button>
+      <div className="flex flex-col items-center gap-3 sm:flex-row">
+        <button
+          onClick={handleDraw}
+          disabled={isDrawing || aiLoading}
+          className="rounded-full bg-violet-600 px-8 py-3 text-base font-semibold text-white shadow-md transition hover:bg-violet-700 active:scale-95 disabled:opacity-60"
+        >
+          {flipped ? "다시 뽑기" : "운세 보기"}
+        </button>
+
+        <button
+          onClick={handleAIDraw}
+          disabled={isDrawing || aiLoading}
+          className="rounded-full border border-violet-300 bg-white px-8 py-3 text-base font-semibold text-violet-700 shadow-md transition hover:bg-violet-50 active:scale-95 disabled:opacity-60 dark:border-violet-700 dark:bg-neutral-900 dark:text-violet-300 dark:hover:bg-neutral-800"
+        >
+          {aiLoading ? "AI가 만드는 중…" : "🤖 AI 운세 만들기"}
+        </button>
+      </div>
+
+      {error && (
+        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+      )}
 
       {count !== null && (
         <p className="text-sm text-neutral-500 dark:text-neutral-400">
