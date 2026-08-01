@@ -140,3 +140,48 @@ export default function FortuneCard() {
                     key={n}
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white shadow ${
                       LOTTO_COLORS[i % LOTTO_COLORS.length]
+                    }`}
+                  >
+                    {n}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col items-center gap-3 sm:flex-row">
+        <button
+          onClick={handleDraw}
+          disabled={isDrawing || aiLoading}
+          className="rounded-full bg-violet-600 px-8 py-3 text-base font-semibold text-white shadow-md transition hover:bg-violet-700 active:scale-95 disabled:opacity-60"
+        >
+          {flipped ? "다시 뽑기" : "운세 보기"}
+        </button>
+
+        <button
+          onClick={handleAIDraw}
+          disabled={isDrawing || aiLoading}
+          className="rounded-full border border-violet-300 bg-white px-8 py-3 text-base font-semibold text-violet-700 shadow-md transition hover:bg-violet-50 active:scale-95 disabled:opacity-60 dark:border-violet-700 dark:bg-neutral-900 dark:text-violet-300 dark:hover:bg-neutral-800"
+        >
+          {aiLoading ? "AI가 만드는 중…" : "🤖 AI 운세 만들기"}
+        </button>
+      </div>
+
+      {error && (
+        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+      )}
+
+      {count !== null && (
+        <p className="text-sm text-neutral-500 dark:text-neutral-400">
+          지금까지 뽑은 운세{" "}
+          <span className="font-semibold text-violet-600 dark:text-violet-400">
+            {count.toLocaleString()}
+          </span>
+          번
+        </p>
+      )}
+    </div>
+  );
+}
